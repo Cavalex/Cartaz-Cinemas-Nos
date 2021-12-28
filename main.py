@@ -1,4 +1,8 @@
 import unicodedata
+import time
+import platform
+import os
+from win10toast_click import ToastNotifier
 from requests_html import HTMLSession
 from settings import *
 
@@ -18,7 +22,7 @@ def toPage(s):
             novoString = novoString + removeAccentChars(c.lower())
     return novoString
 
-# retorna uma lista com todo os nomes de todos os filmes disponíveis no cartaz do cinema
+# retorna o nome do filme para o site com o filme
 def parseNome(r):
     #return r.html.find('.search-bar', first=True).text.split("Cinemas")[0].split("\n")[1:][:-1]
     return r.html.find("h1", first=True)
@@ -54,6 +58,12 @@ def isHour(texto):
             return True
     return False
 
+# organiza as horas do cinema por ordem crescente
+def organizarHoras(horas):
+    format = "%Hh%M"
+    timeHoras = [time.strptime(h, format) for h in horas]
+    return [time.strftime(format, h) for h in sorted(timeHoras)]
+
 # retorna todas as sessões disponíveis no nosso cinema. Se o nome estiver mal, retorna todas as sessões. 
 def parseSessoes(cinemas):
     sessoes = []
@@ -64,23 +74,44 @@ def parseSessoes(cinemas):
         i += 1
     
     i = 2
+    z = i
     novasSessoes = []
     if sessoes:
         while True:
             while (i < len(sessoes) - 1):
                 if not isHour(sessoes[i]):
-                    novasSessoes = sessoes[:i]
+                    novasSessoes.append(sessoes[z:i])
                     break
                 i += 1
             if toPage(sessoes[i]) == toPage(cinema): # se houver outra linha com o mesmo cinema, ou seja, outra sala:
                 i += 2
+                z = i
                 continue
             break
 
-    return novasSessoes
+    return organizarHoras(sum(novasSessoes, []))
 
-def main():
-        
+# envia uma notificação para o pc da pessoa
+# só funciona em windows
+def enviarNotificacao():
+    toaster = ToastNotifier()
+    toaster.show_toast(
+        title=f"Filmes Cinema {cinema}",
+        msg=f"{cinema}: carrega para veres todos os filmes disponíveis lá! >>", # message 
+        icon_path=f"{os.getcwd()}\\icon.ico",
+        duration = 5,
+        callback_on_click=abrirFicheiro # click notification to run function 
+    )
+
+    print(f"{os.getcwd()}\\icon.ico")
+
+# abre o ficheiro ao carregar na notificação
+def abrirFicheiro():
+    os.system(f"{nomeFicheiro}")
+
+# guarda todas as sessões de todos os filmes do cinema num ficheiro
+def guardarSessoesEmFicheiro():
+
     urlCartaz = "https://cinemas.nos.pt/pages/cartaz.aspx"
     urlCinema = f"https://cinemas.nos.pt/cinemas/pages/{toPage(cinema)}.aspx"
 
@@ -95,24 +126,43 @@ def main():
     # link de cada filme na lista "links"
     links = parseLinks(r)
 
-    # verificar os filmes que estão no cinema passado
-    for i, link in enumerate(links):
-        r = session.get(link) # site do filme
-        cinemas = r.html.find(".table")
+    with open("sessoes.txt", "w") as file:
+        
+        file.write(f"Filmes Disponíveis em: {cinema}\n")
 
-        nome = parseNome(r).text
+        # verificar os filmes que estão no cinema no dia de hoje
+        for i, link in enumerate(links):
+            r = session.get(link) # site do filme
+            cinemas = r.html.find(".table")
 
-        #cinemas[0] == hoje
-        #cinemas[1] == amanhã, etc
+            nome = parseNome(r).text
 
-        # cinemas, salas e horários organizados nesta lista
-        cinemas = parseCinemas(cinemas[0])
+            #cinemas[0] == hoje
+            #cinemas[1] == amanhã, etc
 
-        # sessoes para o cinema passado em settings.py
-        sessoes = parseSessoes(cinemas) if parseSessoes(cinemas) else []
+            # cinemas, salas e horários organizados nesta lista
+            cinemas = parseCinemas(cinemas[0])
 
-        print(i, nome)
-        print(sessoes)
+            # sessoes para o cinema passado em settings.py
+            sessoes = parseSessoes(cinemas) if parseSessoes(cinemas) else []
+
+            if sessoes:
+                file.write(f"\n{nome}:\n")
+                for i in range(len(sessoes)):
+                    if i == len(sessoes) - 1:
+                        file.write(sessoes[i] + "\n")
+                    else:
+                        file.write(sessoes[i] + ",")
+
+def main():
+    
+    #while True:
+
+    guardarSessoesEmFicheiro()
+
+    system = platform.system().lower()
+    if system == "windows": # só funciona em windows
+        enviarNotificacao()
 
 if __name__ == "__main__":
     main()
