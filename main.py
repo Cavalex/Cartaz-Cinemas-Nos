@@ -19,8 +19,9 @@ def toPage(s):
     return novoString
 
 # retorna uma lista com todo os nomes de todos os filmes disponíveis no cartaz do cinema
-def parseNomes(r):
-    return r.html.find('.search-bar', first=True).text.split("Cinemas")[0].split("\n")[1:][:-1]
+def parseNome(r):
+    #return r.html.find('.search-bar', first=True).text.split("Cinemas")[0].split("\n")[1:][:-1]
+    return r.html.find("h1", first=True)
 
 # retorna uma lista com todos os links para todos os filmes disponíveis no cartaz do cinema
 def parseLinks(r):
@@ -28,7 +29,7 @@ def parseLinks(r):
     links = links.split("<li><a class=\"list-item\" href=\"")[1:]
     novosLinks = []
     for link in links:
-        novosLinks.append("https://cinemas.nos.pt/" + link.split("\">")[0]) # não consigo modificar o array original por alguma razão
+        novosLinks.append("https://cinemas.nos.pt" + link.split("\">")[0]) # não consigo modificar o array original por alguma razão
 
     return novosLinks
 
@@ -89,26 +90,20 @@ def main():
     r = session.get(urlCinema)
     if r.status_code == 404: # 200 == site foi encontrado, 404 == erro (fomos, p. exemplo, redirecionados)
         r = session.get(urlCartaz)
-
     print(urlCinema)
-    print(r.status_code)
-
-    # nome de cada filme na lista "nomes"
-    nomes = parseNomes(r)
 
     # link de cada filme na lista "links"
     links = parseLinks(r)
 
-    # juntar tudo num tuplo (<nome>, <link>)
-    filmes = [(nomes[i], links[i]) for i in range(len(links))]
-
     # verificar os filmes que estão no cinema passado
-    for i, filme in enumerate(filmes):
-        r = session.get(filme[1]) # site do filme
+    for i, link in enumerate(links):
+        r = session.get(link) # site do filme
         cinemas = r.html.find(".table")
 
+        nome = parseNome(r).text
+
         #cinemas[0] == hoje
-        #cinemas[1] == amanhã
+        #cinemas[1] == amanhã, etc
 
         # cinemas, salas e horários organizados nesta lista
         cinemas = parseCinemas(cinemas[0])
@@ -116,7 +111,7 @@ def main():
         # sessoes para o cinema passado em settings.py
         sessoes = parseSessoes(cinemas) if parseSessoes(cinemas) else []
 
-        print(i, filme[0])
+        print(i, nome)
         print(sessoes)
 
 if __name__ == "__main__":
