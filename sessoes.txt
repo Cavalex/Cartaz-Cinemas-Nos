@@ -1,7 +1,7 @@
 Filmes Disponíveis em: Almada Fórum
 
 Caça-Fantasmas: O Legado:
-00h25,21h40
+00h25
 
 Cantar! 2 (VP):
 12h45,15h20,17h50
@@ -21,8 +21,11 @@ Depois do Medo - Bruno Nogueira:
 Encanto (VP):
 14h10,16h40,19h10
 
+Eternals - Eternos:
+13h50,17h10,20h50
+
 Homem-Aranha: Sem Volta a Casa:
-00h10,22h10,23h10
+00h10,23h10
 
 Homem-Aranha: Sem Volta a Casa (4DX):
 23h40
@@ -40,7 +43,7 @@ Não Olhem para Cima:
 00h15
 
 Resident Evil: Raccoon City:
-00h30,22h00
+00h30
 
 The King's Man: O Início (Atmos):
 00h25

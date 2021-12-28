@@ -2,6 +2,7 @@ import unicodedata
 import time
 import platform
 import os
+from datetime import datetime
 from win10toast_click import ToastNotifier
 from requests_html import HTMLSession
 from settings import *
@@ -109,6 +110,21 @@ def enviarNotificacao():
 def abrirFicheiro():
     os.system(f"{nomeFicheiro}")
 
+# vai retornar True se já tiver passado mais que o tempo suficiente para enviar nova notificaçao
+def horaDeMandarNotificacao(lastSent):
+    format = "%H:%M %d-%m-%Y"
+    ultimaNotificacao = datetime.strptime(lastSent, format)
+    agora = datetime.now()
+    diferenca = agora - ultimaNotificacao
+    horas = diferenca.days * 24
+
+    if horas >= intervaloDeTempo:
+        with open("lastSent.txt", "w") as file:
+            lastSent = datetime.strftime(agora, format)
+            file.write(lastSent)
+        return True
+    return False
+
 # guarda todas as sessões de todos os filmes do cinema num ficheiro
 def guardarSessoesEmFicheiro():
 
@@ -156,13 +172,20 @@ def guardarSessoesEmFicheiro():
 
 def main():
     
-    #while True:
+    lastSent = None
+    with open("lastSent.txt", "r") as file:
+        lastSent = file.read()
+        print(lastSent)
 
-    guardarSessoesEmFicheiro()
+    while True:
+        if horaDeMandarNotificacao(lastSent):
+            guardarSessoesEmFicheiro()
 
-    system = platform.system().lower()
-    if system == "windows": # só funciona em windows
-        enviarNotificacao()
+            system = platform.system().lower()
+            if system == "windows": # só funciona em windows
+                enviarNotificacao()
+        print("-- sleeping for 1 hour --")
+        time.sleep(3600000) # 1 hora
 
 if __name__ == "__main__":
     main()
