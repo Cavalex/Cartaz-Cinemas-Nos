@@ -1,2 +1,2 @@
 email = "exemplo@exemplo.com"
-cinema = "Alegro Montijo"
+cinema = "Braga Parque"
