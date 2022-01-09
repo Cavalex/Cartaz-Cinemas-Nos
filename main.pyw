@@ -9,18 +9,18 @@ from settings import *
 
 # remove acentos das letras
 # https://stackoverflow.com/a/517974/7966259
-def removeAccentChars(x: str):
+def removerAcentos(x: str):
     return u"".join([c for c in unicodedata.normalize('NFKD', x) if not unicodedata.combining(c)])
 
 # passa "Braga Parque" para "braga-parque"
 # não sabia que outro nome dar à função xD
-def toPage(s):
+def simplificarNome(s):
     novoString = ""
     for c in s:
         if c == " ":
             novoString = novoString + "-"
         else:
-            novoString = novoString + removeAccentChars(c.lower())
+            novoString = novoString + removerAcentos(c.lower())
     return novoString
 
 # retorna o nome do filme para o site com o filme
@@ -69,7 +69,7 @@ def organizarHoras(horas):
 def parseSessoes(cinemas):
     sessoes = []
     for i in range(len(cinemas) - 1):
-        if toPage(cinemas[i]) == toPage(cinema): # encontrou o cinema
+        if simplificarNome(cinemas[i]) == simplificarNome(cinema): # encontrou o cinema
             sessoes = cinemas[i:]
             break
         i += 1
@@ -84,7 +84,7 @@ def parseSessoes(cinemas):
                     novasSessoes.append(sessoes[z:i])
                     break
                 i += 1
-            if toPage(sessoes[i]) == toPage(cinema): # se houver outra linha com o mesmo cinema, ou seja, outra sala:
+            if simplificarNome(sessoes[i]) == simplificarNome(cinema): # se houver outra linha com o mesmo cinema, ou seja, outra sala:
                 i += 2
                 z = i
                 continue
@@ -130,7 +130,7 @@ def horaDeEnviarNotificacao(ultimaAtualizacao):
 def guardarSessoesEmFicheiro():
 
     urlCartaz = "https://cinemas.nos.pt/pages/cartaz.aspx"
-    urlCinema = f"https://cinemas.nos.pt/cinemas/pages/{toPage(cinema)}.aspx"
+    urlCinema = f"https://cinemas.nos.pt/cinemas/pages/{simplificarNome(cinema)}.aspx"
 
     session = HTMLSession()
 
