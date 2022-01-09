@@ -53,7 +53,7 @@ def parseCinemas(cinema):
     return cinemas
 
 # retorna True se o valor passado for uma hora (não valida se é "válida")
-def isHour(texto):
+def serHora(texto):
     if len(texto) == 5 and texto[2] == "h":
         if texto[0].isnumeric() and texto[1].isnumeric() and texto[3].isnumeric() and texto[4].isnumeric():
             return True
