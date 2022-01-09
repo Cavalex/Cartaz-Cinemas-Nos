@@ -80,7 +80,7 @@ def parseSessoes(cinemas):
     if sessoes:
         while True:
             while (i < len(sessoes) - 1):
-                if not isHour(sessoes[i]):
+                if not serHora(sessoes[i]):
                     novasSessoes.append(sessoes[z:i])
                     break
                 i += 1
