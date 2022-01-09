@@ -111,17 +111,18 @@ def abrirFicheiro():
     os.system(f"{nomeFicheiro}")
 
 # vai retornar True se já tiver passado mais que o tempo suficiente para enviar nova notificaçao
-def horaDeMandarNotificacao(lastSent):
+def horaDeEnviarNotificacao(ultimaAtualizacao):
     format = "%H:%M %d-%m-%Y"
-    ultimaNotificacao = datetime.strptime(lastSent, format)
+    ultimaNotificacao = datetime.strptime(ultimaAtualizacao[:-1], format) # sem o [:-1] dá "ValueError: unconverted data remains" no strptime
     agora = datetime.now()
     diferenca = agora - ultimaNotificacao
     horas = diferenca.days * 24
 
     if horas >= intervaloDeTempo:
-        with open("lastSent.txt", "w") as file:
-            lastSent = datetime.strftime(agora, format)
-            file.write(lastSent)
+        with open(nomeFicheiro, "w") as ficheiro:
+            ultimaAtualizacao = datetime.strftime(agora, format)
+            ficheiro.write(ultimaAtualizacao)
+            ficheiro.write("\n\n")
         return True
     return False
 
@@ -142,12 +143,12 @@ def guardarSessoesEmFicheiro():
     # link de cada filme na lista "links"
     links = parseLinks(r)
 
-    with open("sessoes.txt", "w") as file:
+    with open("sessoes.txt", "a") as ficheiro:
         
-        file.write(f"Filmes Disponíveis em: {cinema}\n")
+        ficheiro.write(f"Filmes Disponíveis em: {cinema}\n")
 
         # verificar os filmes que estão no cinema no dia de hoje
-        for i, link in enumerate(links):
+        for link in links:
             r = session.get(link) # site do filme
             cinemas = r.html.find(".table")
 
@@ -163,29 +164,31 @@ def guardarSessoesEmFicheiro():
             sessoes = parseSessoes(cinemas) if parseSessoes(cinemas) else []
 
             if sessoes:
-                file.write(f"\n{nome}:\n")
+                ficheiro.write(f"\n{nome}:\n")
                 for i in range(len(sessoes)):
                     if i == len(sessoes) - 1:
-                        file.write(sessoes[i] + "\n")
+                        ficheiro.write(sessoes[i] + "\n")
                     else:
-                        file.write(sessoes[i] + ",")
+                        ficheiro.write(sessoes[i] + ",")
+
+    print("-- Sessões atualizadas! --")
 
 def main():
     
-    lastSent = None
-    with open("lastSent.txt", "r") as file:
-        lastSent = file.read()
-        print(lastSent)
+    ultimaAtualizacao = None
+    with open(nomeFicheiro, "r") as ficheiro:
+        ultimaAtualizacao = ficheiro.readline() # a 1ª linha do ficheiro
+    print(f"-- {ultimaAtualizacao[:-1]} --") # para não fazer um \n estranho
 
     while True:
-        if horaDeMandarNotificacao(lastSent):
+        if horaDeEnviarNotificacao(ultimaAtualizacao):
             guardarSessoesEmFicheiro()
 
-            system = platform.system().lower()
-            if system == "windows": # só funciona em windows
+            sistema = platform.system().lower()
+            if sistema == "windows": # só funciona em windows
                 enviarNotificacao()
-        print("-- sleeping for 1 hour --")
-        time.sleep(3600000) # 1 hora
+        print("-- esperar 1 hora --")
+        time.sleep(3600000) # esperar 1 hora para o loop não estar sempre a correr
 
 if __name__ == "__main__":
     main()
